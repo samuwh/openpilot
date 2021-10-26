@@ -56,6 +56,16 @@ class CarInterfaceBase():
   def init(CP, logcan, sendcan):
     pass
 
+  @staticmethod
+  def get_steer_feedforward_default(desired_angle, v_ego):
+    # Proportional to realigning tire momentum: lateral acceleration.
+    # TODO: something with lateralPlan.curvatureRates
+    return desired_angle * (v_ego**2)
+
+  @classmethod
+  def get_steer_feedforward_function(cls):
+    return cls.get_steer_feedforward_default
+
   # returns a set of default params to avoid repetition in car specific params
   @staticmethod
   def get_std_params(candidate, fingerprint):
@@ -134,7 +144,8 @@ class CarInterfaceBase():
     elif cs_out.steerWarning:
       # only escalate to the harsher alert after the condition has
       # persisted for 0.5s and we're certain that the user isn't overriding
-      if self.steering_unpressed > int(0.5/DT_CTRL) and self.steer_warning > int(0.5/DT_CTRL):
+      if not cs_out.standstill and self.steering_unpressed > int(0.5 / DT_CTRL) and \
+         self.steer_warning > int(0.5 / DT_CTRL):
         events.add(EventName.steerTempUnavailable)
       else:
         events.add(EventName.steerTempUnavailableSilent)
